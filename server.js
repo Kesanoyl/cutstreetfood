@@ -65,6 +65,23 @@ async function sendPush(phone, title, message, retries = 2) {
   } catch (e) { console.error('[OneSignal] erreur', e.message); }
 }
 
+// Passage « en attente » → « payée ». Point de passage UNIQUE : la notif de
+// confirmation part ici, donc exactement une fois, que la commande soit
+// confirmée par le webhook Stripe (client parti) ou par la page de confirmation
+// (client revenu). La transition depuis 'pending' sert de garde anti-doublon.
+async function markOrderPaid(order, via) {
+  if (!order || order.status !== 'pending') return false;
+  await updateOrderStatus(order.order_number, 'paid');
+  order.status = 'paid';
+  console.log('[Commande]', order.order_number, 'payée (' + via + ')');
+  sendPush(
+    order.customer_phone,
+    `✅ Commande #${order.order_number} confirmée !`,
+    `Prête dans ~${order.prep_minutes || 15} min. Merci !`
+  );
+  return true;
+}
+
 const app = express();
 
 // ─── MIDDLEWARE ───────────────────────────────────────────
@@ -83,13 +100,11 @@ app.post('/api/stripe-webhook', express.raw({ type: 'application/json' }), async
   if (event.type === 'checkout.session.completed') {
     const session = event.data.object;
     console.log('[Stripe] Paiement confirmé:', session.id);
-    // Marque la commande payee cote serveur (independant du client / page de confirmation)
+    // Marque la commande payée côté serveur ET envoie la notif de confirmation —
+    // même si le client a fermé l'onglet sans revenir sur la page de confirmation.
     try {
       const order = await getOrderBySession(session.id);
-      if (order && order.status === 'pending') {
-        await updateOrderStatus(order.order_number, 'paid');
-        console.log('[Stripe] Commande', order.order_number, 'marquée payée (webhook)');
-      }
+      await markOrderPaid(order, 'webhook Stripe');
     } catch (e) { console.error('[Stripe webhook] maj statut:', e.message); }
   }
   res.json({ received: true });
@@ -181,11 +196,8 @@ app.get('/api/order-by-session/:sessionId', async (req, res) => {
   try {
     const order = await getOrderBySession(req.params.sessionId);
     if (!order) return res.status(404).json({ error: 'Commande introuvable' });
-    if (order.status === 'pending') {
-      await updateOrderStatus(order.order_number, 'paid');
-      order.status = 'paid';
-      sendPush(order.customer_phone, `✅ Commande #${order.order_number} confirmée !`, `Prête dans ~${order.prep_minutes || 15} min. Merci !`);
-    }
+    // No-op si le webhook Stripe est déjà passé (la notif a alors déjà été envoyée).
+    await markOrderPaid(order, 'page de confirmation');
     res.json({
       orderNumber: order.order_number,
       status: order.status,
