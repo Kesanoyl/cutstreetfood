@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>Admin — CUT Streetfood</title>
+  <link rel="stylesheet" href="style.css" />
+  <style>
+    .admin-page { padding: 80px 24px 40px; max-width: 900px; margin: 0 auto; position: relative; z-index: 1; }
+    .admin-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 30px; }
+    .admin-header h1 { font-family: 'Playfair Display', serif; font-size: 2rem; }
+    .admin-header h1 span { color: var(--rojo); }
+    .order-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--r-lg); padding: 20px 24px; margin-bottom: 14px; }
+    .order-card-header { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; }
+    .order-num { font-family:'Playfair Display',serif; font-size:1.5rem; font-weight:700; color:var(--oro); }
+    .order-time { font-size:0.8rem; color:var(--text-dim); margin-left:auto; }
+    .order-items { font-size:0.9rem; color:var(--text); margin-bottom:6px; }
+    .order-items span { color:var(--text-muted); font-size:0.78rem; margin-left:4px; }
+    .order-phone { font-size:0.85rem; color:var(--text-dim); margin-bottom:4px; }
+    .order-name { font-weight:600; }
+    .order-total { font-weight:700; color:var(--rojo-light); font-size:1.1rem; }
+    .order-actions { display:flex; gap:8px; align-items:center; margin-top:12px; flex-wrap:wrap; }
+    .action-btn { font-family:inherit; font-weight:600; font-size:0.82rem; padding:8px 18px; border:none; border-radius:999px; cursor:pointer; transition:all .2s var(--ease-out); }
+    .btn-prep { background: rgba(232,97,44,0.12); color: var(--fuego); border: 1px solid rgba(232,97,44,0.2); }
+    .btn-prep:hover { background: var(--fuego); color: #fff; }
+    .btn-ready { background: rgba(76,175,80,0.12); color: #4CAF50; border: 1px solid rgba(76,175,80,0.3); }
+    .btn-ready:hover { background: #4CAF50; color: #fff; }
+    .btn-done { background: var(--bg-surface); color: var(--text-dim); border: 1px solid var(--border); }
+    .btn-done:hover { border-color: var(--text-dim); color: var(--text); }
+    .status-tag { font-size:0.72rem; font-weight:700; letter-spacing:1px; text-transform:uppercase; padding:4px 12px; border-radius:999px; }
+    .tag-paid { background: rgba(212,168,67,0.12); color: var(--oro); }
+    .tag-preparing { background: rgba(232,97,44,0.12); color: var(--fuego); }
+    .tag-ready { background: rgba(76,175,80,0.15); color: #4CAF50; animation: pulseTag 2s infinite; }
+    @keyframes pulseTag { 0%,100% { opacity:1; } 50% { opacity:.5; } }
+    .empty-state { text-align:center; padding:60px 20px; color:var(--text-dim); }
+    .empty-state span { font-size:3rem; display:block; margin-bottom:12px; }
+    .refresh-bar { display: flex; align-items: center; gap: 8px; font-size: 0.8rem; color: var(--text-dim); margin-bottom: 20px; }
+    .delivery-badge { font-size:0.7rem; padding:3px 10px; border-radius:999px; background: rgba(59,130,246,0.1); color: #60a5fa; }
+  </style>
+</head>
+<body style="background:var(--bg);">
+  <canvas id="particles-canvas" style="position:fixed;inset:0;z-index:0;pointer-events:none;opacity:0.2;"></canvas>
+
+  <div class="admin-page">
+    <div class="admin-header">
+      <h1>🔧 Admin <span>CUT Streetfood</span></h1>
+      <button class="btn btn-outline btn-sm" onclick="location.reload()">🔄 Actualiser</button>
+    </div>
+    <div class="refresh-bar" id="refresh-status">⏱️ Auto-refresh toutes les 10s</div>
+    <div id="orders-container">
+      <div class="empty-state"><span>📋</span><p>Chargement des commandes...</p></div>
+    </div>
+  </div>
+
+  <script>
+    const statusLabels = { paid:'✅ Payée', preparing:'👨‍🍳 En préparation', ready:'🎉 Prête !' };
+    const statusTags = { paid:'tag-paid', preparing:'tag-preparing', ready:'tag-ready' };
+
+    async function loadOrders() {
+      try {
+        const res = await fetch('/api/admin/orders');
+        const orders = await res.json();
+        const container = document.getElementById('orders-container');
+
+        if (!orders.length) {
+          container.innerHTML = '<div class="empty-state"><span>📋</span><p>Aucune commande en cours pour le moment.</p></div>';
+          return;
+        }
+
+        container.innerHTML = orders.map(o => {
+          const actions = [];
+          if (o.status === 'paid') actions.push('<button class="action-btn btn-prep" onclick="updateStatus('+o.orderNumber+',\'preparing\')">👨‍🍳 En préparation</button>');
+          if (o.status === 'preparing') actions.push('<button class="action-btn btn-ready" onclick="updateStatus('+o.orderNumber+',\'ready\')">🎉 Commande prête</button>');
+          if (o.status === 'ready') actions.push('<button class="action-btn btn-done" onclick="updateStatus('+o.orderNumber+',\'picked_up\')">✅ Récupérée</button>');
+
+          const deliveryInfo = o.deliveryType === 'delivery'
+            ? '<span class="delivery-badge">🛵 Livraison: '+(o.deliveryAddress||'Adresse inconnue')+'</span>'
+            : '<span style="font-size:0.78rem;color:var(--text-muted);">🏃 À emporter</span>';
+
+          const items = (o.items||[]).map(i => i.name + ' x'+(i.qty||1)+(i.label?' <span>('+i.label+')</span>':'')).join(', ');
+
+          return '<div class="order-card">'+
+            '<div class="order-card-header">'+
+            '<span class="order-num">#'+o.orderNumber+'</span>'+
+            '<span class="status-tag '+ (statusTags[o.status]||'') +'">'+(statusLabels[o.status]||o.status)+'</span>'+
+            deliveryInfo +
+            '<span class="order-time">'+new Date(o.createdAt).toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'})+'</span>'+
+            '</div>'+
+            '<div class="order-items">'+items+'</div>'+
+            '<div class="order-phone">📞 '+o.phone+' <span class="order-name">'+(o.name||'')+'</span> · ⏱️ ~'+o.prepMinutes+'min</div>'+
+            '<div class="order-total">'+(o.totalCents/100).toFixed(2).replace('.',',')+'€</div>'+
+            (actions.length ? '<div class="order-actions">'+actions.join('')+'</div>' : '')+
+            '</div>';
+        }).join('');
+
+        document.getElementById('refresh-status').textContent = '⏱️ Dernière mise à jour : ' + new Date().toLocaleTimeString('fr-FR');
+      } catch(e) {
+        document.getElementById('orders-container').innerHTML = '<div class="empty-state"><span>⚠️</span><p>Erreur de connexion au serveur.</p></div>';
+      }
+    }
+
+    async function updateStatus(orderNumber, status) {
+      try {
+        await fetch('/api/admin/order/'+orderNumber+'/status', {
+          method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({status})
+        });
+        loadOrders();
+      } catch(e) { alert('Erreur: '+e.message); }
+    }
+
+    loadOrders();
+    setInterval(loadOrders, 10000);
+  </script>
+
+  <!-- Particles -->
+  <script>
+    (function(){
+      const canvas = document.getElementById('particles-canvas');
+      if (!canvas) return;
+      const ctx = canvas.getContext('2d');
+      let particles = [];
+      function resize(){ canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
+      resize(); window.addEventListener('resize', resize);
+      class Particle {
+        constructor(){ this.reset(); }
+        reset(){
+          this.x = Math.random()*canvas.width; this.y = canvas.height+20;
+          this.size = Math.random()*2+0.5; this.speedY = -(Math.random()*0.4+0.15);
+          this.speedX = (Math.random()-0.5)*0.3; this.opacity = Math.random()*0.3+0.08;
+          this.life=0; this.maxLife=Math.random()*300+200;
+          this.color = [[196,30,58],[232,97,44],[212,168,67],[232,69,92],[240,128,74]][Math.floor(Math.random()*5)];
+        }
+        update(){
+          this.y+=this.speedY; this.x+=this.speedX+Math.sin(this.life*0.02)*0.2;
+          this.life++; this.opacity=Math.max(0,this.opacity-0.001);
+          if(this.life>this.maxLife||this.y<-20||this.opacity<=0) this.reset();
+        }
+        draw(c){
+          c.beginPath(); c.arc(this.x,this.y,this.size,0,Math.PI*2);
+          c.fillStyle='rgba('+this.color.join(',')+','+this.opacity+')'; c.fill();
+          c.beginPath(); c.arc(this.x,this.y,this.size*3,0,Math.PI*2);
+          c.fillStyle='rgba('+this.color.join(',')+','+(this.opacity*0.1)+')'; c.fill();
+        }
+      }
+      for(let i=0;i<30;i++){const p=new Particle();p.y=Math.random()*canvas.height;p.life=Math.random()*p.maxLife;particles.push(p);}
+      function animate(){ctx.clearRect(0,0,canvas.width,canvas.height);particles.forEach(p=>{p.update();p.draw(ctx);});requestAnimationFrame(animate);}
+      animate();
+    })();
+  </script>
+</body>
+</html>

@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: cutstreetfood
+    env: node
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: STRIPE_SECRET_KEY
+        sync: false
+      - key: STRIPE_WEBHOOK_SECRET
+        sync: false
+      - key: DATABASE_URL
+        sync: false
+      - key: PUBLIC_URL
+        sync: false

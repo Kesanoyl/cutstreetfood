@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>Commande confirmée — CUT Streetfood</title>
+  <link rel="stylesheet" href="style.css" />
+  <style>
+    .confirm-page { min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 40px 24px 80px; }
+    .confirm-card { max-width: 520px; width: 100%; background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--r-xl); padding: 40px 28px; }
+    .confirm-emoji { font-size: 4rem; margin-bottom: 12px; animation: popIn 0.5s var(--ease-spring); }
+    @keyframes popIn { from { opacity:0; transform:scale(.5); } to { opacity:1; transform:none; } }
+    .confirm-card h1 { font-family: 'Playfair Display', serif; font-size: 2rem; margin-bottom: 6px; }
+    .confirm-order-num { font-size: 3rem; font-weight: 700; color: var(--oro); font-family:'Playfair Display',serif; letter-spacing:2px; margin: 12px 0; }
+    .confirm-detail { font-size: 0.95rem; color: var(--text-dim); line-height:1.7; }
+    .confirm-timer { display: flex; align-items: center; justify-content: center; gap: 12px; margin: 20px 0; padding: 16px; background: rgba(196,30,58,0.08); border-radius: var(--r-md); border: 1px solid rgba(196,30,58,0.15); }
+    .confirm-timer-emoji { font-size: 2rem; }
+    .confirm-timer-text { text-align: left; }
+    .confirm-timer-text strong { display: block; color: var(--rojo-light); font-size: 1.2rem; }
+    .confirm-timer-text span { font-size: 0.85rem; color: var(--text-dim); }
+    .confirm-eta { font-size: 1rem; color: var(--text); margin: 8px 0 20px; }
+    .confirm-eta strong { color: var(--fuego); }
+    .confirm-actions { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; margin-top: 20px; }
+    .status-badge { display: inline-flex; align-items: center; gap: 6px; padding: 8px 18px; border-radius: 999px; font-weight: 600; font-size: 0.85rem; }
+    .status-paid { background: rgba(212,168,67,0.15); color: var(--oro); border: 1px solid rgba(212,168,67,0.3); }
+    .status-preparing { background: rgba(232,97,44,0.12); color: var(--fuego); border: 1px solid rgba(232,97,44,0.2); }
+    .status-ready { background: rgba(76,175,80,0.15); color: #4CAF50; border: 1px solid rgba(76,175,80,0.3); }
+    .pulse-dot { width: 8px; height: 8px; border-radius: 50%; background: currentColor; animation: pulse2 1.5s ease-in-out infinite; }
+    @keyframes pulse2 { 0%,100% { opacity:1; } 50% { opacity:.3; } }
+    .spinner { width: 40px; height: 40px; border-radius: 50%; border: 2px solid rgba(196,30,58,0.2); border-top-color: var(--rojo); animation: spin .9s linear infinite; margin: 20px auto; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .delivery-box { margin-top: 16px; padding: 14px; background: rgba(59,130,246,0.1); border: 1px solid rgba(59,130,246,0.2); border-radius: var(--r-md); color: #60a5fa; font-weight: 600; font-size: 0.9rem; }
+    .pickup-box { margin-top: 16px; padding: 14px; background: rgba(76,175,80,0.1); border: 1px solid rgba(76,175,80,0.2); border-radius: var(--r-md); color: #4CAF50; font-weight: 600; font-size: 0.9rem; }
+    .confirm-items { text-align: left; margin: 16px 0; }
+    .confirm-item { display: flex; justify-content: space-between; padding: 6px 0; font-size: 0.88rem; color: var(--text-dim); border-bottom: 1px solid var(--border); }
+    .confirm-item:last-child { border-bottom: 0; }
+  </style>
+</head>
+<body style="background:var(--bg);">
+  <canvas id="particles-canvas" style="position:fixed;inset:0;z-index:0;pointer-events:none;opacity:0.3;"></canvas>
+
+  <div class="confirm-page" style="position:relative;z-index:1;">
+    <div class="confirm-card">
+      <div class="spinner" id="spinner"></div>
+      <div id="confirm-content" hidden>
+        <div class="confirm-emoji">🎉</div>
+        <h1>Commande confirmée !</h1>
+        <p class="confirm-detail">Numéro de commande</p>
+        <div class="confirm-order-num" id="order-num">---</div>
+        <div class="status-badge status-paid" id="status-badge"><span class="pulse-dot"></span> <span id="status-text">Confirmée</span></div>
+        <div class="confirm-timer" id="eta-box">
+          <div class="confirm-timer-emoji">⏱️</div>
+          <div class="confirm-timer-text">
+            <strong>Temps estimé : <span id="eta-min">~15</span> min</strong>
+            <span>On prépare votre commande avec soin</span>
+          </div>
+        </div>
+        <div class="confirm-items" id="confirm-items"></div>
+        <div id="delivery-info"></div>
+        <p class="confirm-detail" style="margin-top:14px;" id="confirm-msg">
+          Votre commande est en cours de préparation.<br>Vous pouvez suivre son statut ici.
+        </p>
+        <div class="confirm-actions">
+          <a href="/" class="btn btn-primary">← Retour au menu</a>
+          <button class="btn btn-outline" onclick="location.reload()">🔄 Actualiser</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const urlParams = new URLSearchParams(window.location.search);
+    const sessionId = urlParams.get('session_id');
+
+    const statusLabels = { pending:'⏳ En attente', paid:'✅ Confirmée', preparing:'👨‍🍳 En préparation', ready:'🎉 Prête !', picked_up:'🏃 Récupérée' };
+    const statusClasses = { pending:'status-paid', paid:'status-paid', preparing:'status-preparing', ready:'status-ready', picked_up:'' };
+
+    // Fallback: try to get order number from localStorage
+    const lastOrder = JSON.parse(localStorage.getItem('cutstreetfood_last_order') || 'null');
+
+    async function loadOrder() {
+      const spinner = document.getElementById('spinner');
+      const content = document.getElementById('confirm-content');
+
+      if (!sessionId) {
+        spinner.outerHTML = '<p style="color:var(--text-dim);text-align:center;padding:20px;">Aucune commande trouvée.<br><small style="font-size:0.8rem;">Redirigé depuis Stripe ? Rafraîchissez la page.</small></p>';
+        // Try show last order from localStorage if available
+        if (lastOrder && lastOrder.orderNumber) {
+          showOrder(lastOrder);
+        }
+        return;
+      }
+
+      try {
+        const res = await fetch('/api/order-by-session/' + sessionId);
+        if (!res.ok) throw new Error('API error ' + res.status);
+        const order = await res.json();
+        showOrder(order);
+        pollStatus(order.orderNumber);
+        // Paiement confirme : on peut vider le panier maintenant
+        localStorage.removeItem('cutstreetfood_cart');
+      } catch (e) {
+        console.error('Confirmation error:', e);
+        spinner.outerHTML = '<p style="color:var(--text-dim);text-align:center;padding:20px;">Chargement de votre commande...<br><small style="font-size:0.8rem;">Cela peut prendre quelques secondes.</small></p>';
+        // Retry after 2s (Stripe webhook may be delayed)
+        setTimeout(loadOrder, 2000);
+      }
+    }
+
+    function showOrder(order) {
+      const spinner = document.getElementById('spinner');
+      const content = document.getElementById('confirm-content');
+      if (spinner) spinner.hidden = true;
+      if (content) content.hidden = false;
+      if (!order || !order.orderNumber) return;
+
+      document.getElementById('order-num').textContent = '#' + order.orderNumber;
+      document.getElementById('eta-min').textContent = '~' + (order.prepMinutes || 15);
+      updateStatusBadge(order.status);
+
+      // Items
+      const itemsEl = document.getElementById('confirm-items');
+      if (order.items && order.items.length) {
+        itemsEl.innerHTML = order.items.map(i =>
+          '<div class="confirm-item"><span>' + (i.name||'Article') + ' ×' + (i.qty||1) + (i.label ? ' <small>('+i.label+')</small>' : '') + '</span><span>' + ((i.price||0)*(i.qty||1)).toFixed(2).replace('.',',') + '€</span></div>'
+        ).join('');
+      }
+
+      // Mode info
+      const deliveryInfo = document.getElementById('delivery-info');
+      if (order.deliveryType === 'surplace') {
+        deliveryInfo.innerHTML = '<div class="pickup-box">🍽️ Sur place — Commande à déguster au restaurant</div>';
+      } else {
+        deliveryInfo.innerHTML = '<div class="pickup-box">🏃 À emporter — Récupérez votre commande au restaurant</div>';
+      }
+    }
+
+    function updateStatusBadge(status) {
+      const badge = document.getElementById('status-badge');
+      badge.className = 'status-badge ' + (statusClasses[status] || '');
+      document.getElementById('status-text').textContent = statusLabels[status] || status;
+      if (status === 'ready') {
+        document.getElementById('confirm-msg').innerHTML = '🎉 Votre commande est prête !<br>Venez la récupérer au restaurant.';
+        document.getElementById('eta-box').style.display = 'none';
+      }
+    }
+
+    async function pollStatus(orderNumber) {
+      const check = async () => {
+        try {
+          const res = await fetch('/api/order/' + orderNumber);
+          if (res.ok) {
+            const order = await res.json();
+            updateStatusBadge(order.status);
+            if (order.status === 'ready' || order.status === 'picked_up') return;
+          }
+        } catch(e) {}
+        setTimeout(check, 10000);
+      };
+      setTimeout(check, 10000);
+    }
+
+    loadOrder();
+
+    // Particles
+    (function(){
+      const canvas = document.getElementById('particles-canvas');
+      if (!canvas) return;
+      const ctx = canvas.getContext('2d');
+      let particles = [];
+      function resize(){ canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
+      resize(); window.addEventListener('resize', resize);
+      class Particle {
+        constructor(){ this.reset(); }
+        reset(){
+          this.x = Math.random()*canvas.width; this.y = canvas.height+20;
+          this.size = Math.random()*2+0.5; this.speedY = -(Math.random()*0.4+0.15);
+          this.speedX = (Math.random()-0.5)*0.3; this.opacity = Math.random()*0.4+0.1;
+          this.life=0; this.maxLife=Math.random()*300+200;
+          this.color = [[196,30,58],[232,97,44],[212,168,67],[232,69,92],[240,128,74]][Math.floor(Math.random()*5)];
+        }
+        update(){
+          this.y+=this.speedY; this.x+=this.speedX+Math.sin(this.life*0.02)*0.2;
+          this.life++; this.opacity=Math.max(0,this.opacity-0.001);
+          if(this.life>this.maxLife||this.y<-20||this.opacity<=0) this.reset();
+        }
+        draw(c){
+          c.beginPath(); c.arc(this.x,this.y,this.size,0,Math.PI*2);
+          c.fillStyle='rgba('+this.color.join(',')+','+this.opacity+')'; c.fill();
+          c.beginPath(); c.arc(this.x,this.y,this.size*3,0,Math.PI*2);
+          c.fillStyle='rgba('+this.color.join(',')+','+(this.opacity*0.12)+')'; c.fill();
+        }
+      }
+      for(let i=0;i<40;i++){const p=new Particle();p.y=Math.random()*canvas.height;p.life=Math.random()*p.maxLife;particles.push(p);}
+      function animate(){ctx.clearRect(0,0,canvas.width,canvas.height);particles.forEach(p=>{p.update();p.draw(ctx);});requestAnimationFrame(animate);}
+      animate();
+    })();
+  </script>
+</body>
+</html>

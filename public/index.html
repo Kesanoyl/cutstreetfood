@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>CUT Streetfood — Grill Street Food · Click &amp; Collect Paris</title>
+  <meta name="description" content="CUT® Streetfood — Maison de viandes. Barquettes d'onglet de bœuf, poulet pané maison et magret de canard slicés, munchies et desserts maison. Commandez en ligne et retirez à Paris 10 ou Paris 11." />
+  <link rel="stylesheet" href="style.css" />
+  <meta name="theme-color" content="#141A23" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="CUT Streetfood" />
+  <link rel="icon" type="image/png" sizes="32x32" href="img/favicon-32.png" />
+  <link rel="icon" type="image/png" sizes="192x192" href="img/app-icon-192.png" />
+  <link rel="apple-touch-icon" href="img/app-icon-180.png" />
+  <link rel="manifest" href="manifest.json" />
+  <!-- OneSignal Web Push — app dédiée « CUT Streetfood ».
+       L'App ID est public (il peut vivre dans le repo) ; la clé REST reste
+       côté serveur en var d'env Render ONESIGNAL_REST_API_KEY. -->
+  <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
+  <script>
+    // ⚠️ Créer une app OneSignal DÉDIÉE à CUT et coller son App ID ici
+    // (ne JAMAIS réutiliser l'App ID d'un autre restaurant).
+    var CUT_ONESIGNAL_APP_ID = "";
+    window.OneSignalDeferred = window.OneSignalDeferred || [];
+    if (CUT_ONESIGNAL_APP_ID) {
+      OneSignalDeferred.push(async function(OneSignal) {
+        await OneSignal.init({
+          appId: CUT_ONESIGNAL_APP_ID,
+          notifyButton: { enable: true },
+          allowLocalhostAsSecureOrigin: true
+        });
+      });
+    }
+  </script>
+</head>
+<body>
+
+  <!-- LOADER -->
+  <div id="loader" class="loader">
+    <img src="img/logo.png" alt="CUT Streetfood" class="loader-logo" />
+  </div>
+  <noscript><style>#loader{display:none!important}</style></noscript>
+  <script>setTimeout(function(){var l=document.getElementById('loader');if(l)l.classList.add('hidden');},5000);</script>
+
+  <!-- PARTICLES -->
+  <canvas id="particles-canvas"></canvas>
+
+  <!-- SCROLL PROGRESS -->
+  <div class="scroll-progress" id="scroll-progress"></div>
+
+  <!-- NAV -->
+  <nav class="nav" id="nav">
+    <a class="brand" href="#hero">
+      <img src="img/logo.png" alt="CUT Streetfood" />
+      <span>STREET<span class="brand-accent">FOOD</span></span>
+    </a>
+    <button class="nav-burger" id="nav-burger" aria-label="Ouvrir le menu">
+      <span></span><span></span><span></span>
+    </button>
+    <div class="nav-links" id="nav-menu">
+      <a href="#menu" class="nav-link">La carte</a>
+      <a href="#howit" class="nav-link">Commander</a>
+      <a href="#contact" class="nav-link">Nos adresses</a>
+      <a href="#" class="nav-link" id="nav-track">Suivre</a>
+      <a href="#menu" class="nav-cta">Commander</a>
+    </div>
+  </nav>
+
+  <!-- HERO -->
+  <header class="hero" id="hero">
+    <div class="hero-bg">
+      <picture>
+        <source media="(min-width:769px)" srcset="img/hero-pc.jpg" />
+        <img src="img/hero.jpg" alt="" aria-hidden="true" />
+      </picture>
+    </div>
+    <div class="hero-content">
+      <img src="img/logo.png" alt="CUT Streetfood" class="hero-logo-script reveal" />
+      <p class="hero-slogan reveal reveal-delay-1">Grill Street Food · Maison de viandes</p>
+      <h1 class="reveal reveal-delay-1">La viande slicée,<br /><span class="accent">en barquette</span></h1>
+      <p class="hero-sub reveal reveal-delay-2">
+        Onglet de bœuf, poulet pané maison, magret de canard — grillés minute, slicés,
+        nappés d'une sauce maison. <strong>Commandez en ligne</strong>, payez en 2 clics
+        et retirez votre barquette à <strong>Paris 10 ou Paris 11</strong> — sans faire la queue.
+      </p>
+      <div class="hero-badges reveal reveal-delay-2">
+        <span class="hero-badge">🥩 Viandes françaises</span>
+        <span class="hero-badge">🏠 100 % fait maison</span>
+        <span class="hero-badge">⏱️ Prêt en ~15 min</span>
+      </div>
+      <div class="hero-actions reveal reveal-delay-2">
+        <a href="#menu" class="btn btn-primary btn-lg">Commander</a>
+        <a href="#contact" class="btn btn-outline btn-lg">Nos adresses 📍</a>
+      </div>
+      <div class="hero-food reveal reveal-delay-3">
+        <figure>
+          <img src="img/menu/barquette-simple.webp" alt="Barquette Simple" loading="lazy" />
+          <figcaption>Les Barquettes</figcaption>
+        </figure>
+        <figure>
+          <img src="img/menu/tenders.webp" alt="Tenders maison" loading="lazy" />
+          <figcaption>Munchies</figcaption>
+        </figure>
+        <figure>
+          <img src="img/menu/tiramisu-oreo.webp" alt="Tiramisù Oréo" loading="lazy" />
+          <figcaption>Desserts maison</figcaption>
+        </figure>
+      </div>
+    </div>
+    <a href="#menu" class="scroll-cue" aria-label="Voir la carte"><span></span></a>
+  </header>
+
+  <!-- MENU -->
+  <section class="menu-section" id="menu">
+    <div class="section-head reveal">
+      <p class="eyebrow">Notre carte</p>
+      <h2 class="display">La Carte</h2>
+      <p class="section-sub">Composez votre barquette : la viande, la cuisson, l'accompagnement maison et la sauce. Payez, on vous prévient dès que c'est prêt.</p>
+    </div>
+
+    <div class="menu-filters-wrapper" id="menu-filters-wrapper">
+      <div class="menu-filters" id="menu-filters">
+        <button class="filter-pill active" data-cat="all">Tout</button>
+        <button class="filter-pill" data-cat="midi">☀️ Formule Midi</button>
+        <button class="filter-pill" data-cat="barquettes">🥩 Barquettes</button>
+        <button class="filter-pill" data-cat="burger">🍔 Burger</button>
+        <button class="filter-pill" data-cat="munchies">🧀 Munchies</button>
+        <button class="filter-pill" data-cat="desserts">🍰 Desserts</button>
+        <button class="filter-pill" data-cat="boissons">🥤 Boissons</button>
+      </div>
+    </div>
+
+    <div class="menu-grid" id="menu-grid">
+      <!-- Rempli par app.js -->
+    </div>
+  </section>
+
+  <!-- STICKY CONTAINER (filtres collants + suite de la page) -->
+<div class="menu-sticky-container">
+
+  <!-- HOW IT WORKS -->
+  <section class="howit" id="howit">
+    <div class="section-head reveal">
+      <p class="eyebrow">Click &amp; Collect</p>
+      <h2 class="display">Comment ça marche</h2>
+    </div>
+    <div class="howit-steps">
+      <div class="howit-step reveal">
+        <div class="howit-num">1</div>
+        <div class="howit-icon">🥩</div>
+        <h3>Composez</h3>
+        <p>Choisissez votre viande, sa cuisson, l'accompagnement maison et la sauce.</p>
+      </div>
+      <div class="howit-step reveal reveal-delay-1">
+        <div class="howit-num">2</div>
+        <div class="howit-icon">💳</div>
+        <h3>Payez</h3>
+        <p>Paiement sécurisé par carte. Vous choisissez l'adresse de retrait : Paris 10 ou Paris 11.</p>
+      </div>
+      <div class="howit-step reveal reveal-delay-2">
+        <div class="howit-num">3</div>
+        <div class="howit-icon">🔔</div>
+        <h3>Suivez</h3>
+        <p>Statut en temps réel et notification dès que votre commande est prête.</p>
+      </div>
+      <div class="howit-step reveal reveal-delay-3">
+        <div class="howit-num">4</div>
+        <div class="howit-icon">🏃</div>
+        <h3>Récupérez</h3>
+        <p>Passez au comptoir, donnez votre numéro. Zéro attente.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- STATS -->
+  <section class="stats" id="stats">
+    <div class="stats-grid">
+      <div class="stat reveal">
+        <div class="stat-num" data-count="3" data-suffix="">0</div>
+        <div class="stat-lbl">Viandes au choix</div>
+      </div>
+      <div class="stat reveal reveal-delay-1">
+        <div class="stat-num" data-count="2" data-suffix="">0</div>
+        <div class="stat-lbl">Adresses à Paris</div>
+      </div>
+      <div class="stat reveal reveal-delay-2">
+        <div class="stat-num" data-count="15" data-suffix=" min">0</div>
+        <div class="stat-lbl">Préparation moyenne</div>
+      </div>
+      <div class="stat reveal reveal-delay-3">
+        <div class="stat-num" data-count="6" data-suffix="/7">0</div>
+        <div class="stat-lbl">Jours d'ouverture</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- QUI SOMMES-NOUS -->
+  <section class="about" id="about">
+    <div class="about-wrap reveal">
+      <img src="img/resto.jpg" alt="Le restaurant CUT Streetfood" class="about-photo" loading="lazy" />
+      <div class="about-text">
+        <h2>Qui sommes-nous ?</h2>
+        <p>
+          CUT®, c'est une <strong>maison de viandes</strong> version street food : de l'onglet
+          de bœuf 🇫🇷, du poulet pané maison et du magret de canard, grillés minute, slicés
+          et nappés d'une sauce maison. Le tout dans une barquette, avec un accompagnement
+          fait maison — fries persillées, patates douces ou hasselback.
+        </p>
+        <p>
+          <strong>100 % fait maison</strong>, jusqu'aux sauces, aux citronnades et aux desserts.
+          Passez par le <strong>Click &amp; Collect</strong> : vous composez, vous payez, vous
+          êtes prévenu dès que votre commande est prête. Vous n'avez plus qu'à passer au comptoir.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- REVIEWS -->
+  <section class="testi" id="testi">
+    <div class="section-head reveal">
+      <p class="eyebrow">Ils en parlent</p>
+      <h2 class="display">Avis clients</h2>
+    </div>
+    <div class="testi-grid">
+      <div class="testi-card reveal">
+        <div class="stars">★★★★★</div>
+        <p class="testi-text">"L'onglet est parfaitement cuit, la sauce chimichurri est excellente. Commandé en ligne, c'était prêt en arrivant."</p>
+        <p class="testi-author">— Yanis B.</p>
+      </div>
+      <div class="testi-card reveal reveal-delay-1">
+        <div class="stars">★★★★★</div>
+        <p class="testi-text">"Les fries persillées, une tuerie. Et le magret de canard slicé change vraiment de tout ce qu'on trouve autour."</p>
+        <p class="testi-author">— Léa R.</p>
+      </div>
+      <div class="testi-card reveal reveal-delay-2">
+        <div class="stars">★★★★★</div>
+        <p class="testi-text">"La formule midi à 14 € est imbattable, et le click &amp; collect fait gagner un temps fou. Je commande depuis le bureau."</p>
+        <p class="testi-author">— Mehdi K.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- CONTACT -->
+  <section class="contact" id="contact">
+    <div class="section-head reveal">
+      <p class="eyebrow">Nous trouver</p>
+      <h2 class="display">Nos adresses</h2>
+      <p class="section-sub">2 adresses à Paris · Du lundi au samedi · Fermé le dimanche</p>
+    </div>
+    <div class="contact-grid">
+      <div class="contact-info reveal">
+        <h3>📍 CUT Paris 11 — à emporter</h3>
+        <div class="contact-item">
+          <div class="contact-item-icon">📍</div>
+          <div class="contact-item-text">
+            <strong>Adresse</strong>
+            <span>4 rue Saint-Bernard, 75011 Paris</span>
+          </div>
+        </div>
+        <div class="contact-item">
+          <div class="contact-item-icon">📞</div>
+          <div class="contact-item-text">
+            <strong>Téléphone</strong>
+            <span><a href="tel:0987162511">09 87 16 25 11</a></span>
+          </div>
+        </div>
+        <div class="contact-item">
+          <div class="contact-item-icon">🕐</div>
+          <div class="contact-item-text">
+            <strong>Horaires</strong>
+            <span>Lun – Sam · 12h – 14h &amp; 18h – 22h</span>
+          </div>
+        </div>
+
+        <h3 style="margin-top:26px;">📍 CUT Paris 10 — sur place &amp; à emporter</h3>
+        <div class="contact-item">
+          <div class="contact-item-icon">📍</div>
+          <div class="contact-item-text">
+            <strong>Adresse</strong>
+            <span>33 rue du Faubourg Saint-Martin, 75010 Paris</span>
+          </div>
+        </div>
+        <div class="contact-item">
+          <div class="contact-item-icon">📞</div>
+          <div class="contact-item-text">
+            <strong>Téléphone</strong>
+            <span><a href="tel:0978810900">09 78 81 09 00</a></span>
+          </div>
+        </div>
+        <div class="contact-item">
+          <div class="contact-item-icon">🕐</div>
+          <div class="contact-item-text">
+            <strong>Horaires</strong>
+            <span>Lun – Sam · 12h – 14h30 &amp; 19h – 22h30</span>
+          </div>
+        </div>
+      </div>
+      <div class="contact-map reveal reveal-delay-1">
+        <iframe src="https://www.openstreetmap.org/export/embed.html?bbox=2.3500%2C48.8420%2C2.3980%2C48.8760&amp;layer=mapnik&amp;marker=48.8507%2C2.3815" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade" title="Carte des adresses CUT Streetfood"></iframe>
+      </div>
+    </div>
+  </section>
+
+  <!-- CART PANEL -->
+  <div class="cart-overlay" id="cart-overlay"></div>
+  <div class="cart-panel" id="cart-panel">
+    <div class="cart-handle"></div>
+    <div class="cart-header">
+      <h3>🛒 Ma commande</h3>
+      <button class="cart-close" id="cart-close" aria-label="Fermer le panier">✕</button>
+    </div>
+    <div class="cart-items" id="cart-items">
+      <p class="cart-empty">Votre panier est vide. Parcourez la carte et ajoutez vos articles préférés !</p>
+    </div>
+    <div class="cart-footer" id="cart-footer" hidden>
+      <div class="cart-clear">
+        <button class="cart-clear-btn" id="cart-clear-btn">Vider le panier 🗑️</button>
+      </div>
+      <div class="cart-total">
+        <span>Total</span>
+        <strong id="cart-total-price">0,00€</strong>
+      </div>
+      <button class="btn btn-primary btn-lg btn-full" id="cart-order-btn">
+        💳 Payer en ligne
+      </button>
+      <p class="cart-note">Paiement sécurisé par carte bancaire.</p>
+    </div>
+  </div>
+  <div class="cart-badge" id="cart-badge" hidden>
+    🛒
+    <span class="cart-count" id="cart-count">0</span>
+  </div>
+
+  <!-- PRODUCT MODAL -->
+  <div class="custom-overlay" id="custom-overlay"></div>
+  <div class="custom-modal" id="custom-modal">
+    <div class="custom-header">
+      <button class="custom-back" id="custom-back" aria-label="Retour">←</button>
+      <div>
+        <h3 id="custom-title">Personnaliser</h3>
+        <p id="custom-item-desc" style="font-size:0.82rem;color:var(--text-dim);margin-top:4px;display:none;"></p>
+      </div>
+    </div>
+    <div class="custom-body" id="custom-body">
+      <!-- Rempli par app.js -->
+    </div>
+    <div class="custom-footer">
+      <div class="custom-qty">
+        <button id="custom-qty-minus" aria-label="Diminuer la quantité">−</button>
+        <span id="custom-qty-val">1</span>
+        <button id="custom-qty-plus" aria-label="Augmenter la quantité">+</button>
+      </div>
+      <div class="custom-price" id="custom-price">0,00€</div>
+      <button class="custom-add-btn" id="custom-add-btn">Ajouter au panier</button>
+    </div>
+  </div>
+
+  <!-- CHECKOUT MODAL -->
+  <div class="checkout-overlay" id="checkout-overlay"></div>
+  <div class="checkout-modal" id="checkout-modal">
+    <div class="checkout-header">
+      <button class="checkout-back" id="checkout-back" aria-label="Retour">←</button>
+      <h3>💳 Paiement</h3>
+    </div>
+    <div class="checkout-body">
+      <div class="checkout-group">
+        <label class="checkout-label">📍 Restaurant de retrait <span class="checkout-required">*</span></label>
+        <div class="resto-row" id="resto-row"><!-- Rempli par app.js --></div>
+      </div>
+
+      <div class="checkout-group">
+        <label class="checkout-label">Mode de commande</label>
+        <div class="toggle-row" id="order-mode-row">
+          <button class="toggle-btn active" data-key="mode" data-val="emporter">🏃 À emporter</button>
+          <button class="toggle-btn" data-key="mode" data-val="surplace">🍽️ Sur place</button>
+        </div>
+      </div>
+
+      <div class="checkout-group">
+        <label class="checkout-label" for="checkout-phone">📞 Téléphone <span class="checkout-required">*</span></label>
+        <input type="tel" id="checkout-phone" class="checkout-input" placeholder="06 12 34 56 78" autocomplete="tel" />
+        <p class="input-hint">Notification quand votre commande est prête.</p>
+      </div>
+
+      <div class="checkout-group">
+        <label class="checkout-label" for="checkout-name">👤 Prénom</label>
+        <input type="text" id="checkout-name" class="checkout-input" placeholder="Votre prénom" autocomplete="given-name" />
+      </div>
+
+      <label class="checkout-remember">
+        <input type="checkbox" id="checkout-remember" checked />
+        <span>Se souvenir de moi — préremplir mes infos &amp; suivi de mes commandes</span>
+      </label>
+    </div>
+
+    <!-- TOTAL + PAYER -->
+    <div class="checkout-footer-recap">
+      <div class="cart-total">
+        <span>Total</span>
+        <strong id="checkout-total">0,00€</strong>
+      </div>
+      <p class="checkout-recap-eta">⏱️ Temps estimé : <strong id="checkout-eta">~15 min</strong></p>
+      <button class="btn btn-primary btn-lg btn-full" id="checkout-pay-btn">
+        💳 Payer <span id="checkout-btn-total">0,00€</span>
+      </button>
+      <p class="cart-note">Paiement sécurisé Stripe · Données chiffrées</p>
+    </div>
+  </div>
+
+  <!-- TRACKING MODAL -->
+  <div class="checkout-overlay" id="track-overlay"></div>
+  <div class="checkout-modal" id="track-modal">
+    <div class="checkout-header">
+      <button class="checkout-back" id="track-back" aria-label="Retour">←</button>
+      <h3>🔍 Suivre ma commande</h3>
+    </div>
+    <div class="checkout-body">
+      <div class="checkout-group">
+        <label class="checkout-label" for="track-phone">📞 Votre téléphone</label>
+        <input type="tel" id="track-phone" class="checkout-input" placeholder="06 12 34 56 78" autocomplete="tel" />
+        <p class="input-hint">Affiche toutes vos commandes récentes avec ce téléphone.</p>
+      </div>
+      <div id="track-result"></div>
+    </div>
+    <div class="checkout-footer">
+      <button class="btn btn-primary btn-lg btn-full" id="track-btn">🔍 Rechercher</button>
+    </div>
+  </div>
+
+</div>
+
+  <button class="back-to-top" id="back-to-top" onclick="window.scrollTo({top:0,behavior:'smooth'})" title="Retour en haut" aria-label="Retour en haut">
+    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg>
+  </button>
+
+  <!-- FOOTER -->
+  <footer class="footer">
+    <img src="img/logo.png" alt="CUT Streetfood" class="footer-logo" />
+    <p>Grill Street Food · Maison de viandes · Paris 10 &amp; Paris 11</p>
+    <p class="footer-legal">© 2026 CUT® Streetfood — Tous droits réservés</p>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>

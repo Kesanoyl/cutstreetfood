@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>Cuisine — CUT Streetfood</title>
+  <link rel="stylesheet" href="style.css" />
+  <style>
+    .kitchen-page { padding: 80px 24px 40px; max-width: 1100px; margin: 0 auto; position: relative; z-index: 1; }
+    .kitchen-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; }
+    .kitchen-header h1 { font-family: 'Playfair Display', serif; font-size: 2rem; }
+    .kitchen-header h1 span { color: var(--rojo); }
+    .kitchen-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(300px,100%), 1fr)); gap: 16px; }
+    .kitchen-card { background: var(--bg-card); border: 2px solid var(--border); border-radius: var(--r-lg); padding: 20px; transition: all 0.3s; min-width: 0; overflow-wrap: anywhere; word-break: break-word; }
+    .kitchen-card.preparing { border-color: var(--fuego); }
+    .kitchen-card.ready { border-color: #4CAF50; animation: glowGreen 2s infinite; }
+    @keyframes glowGreen { 0%,100% { box-shadow: 0 0 10px rgba(76,175,80,0.1); } 50% { box-shadow: 0 0 25px rgba(76,175,80,0.25); } }
+    .kitchen-card-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+    .kitchen-num { font-family: 'Playfair Display', serif; font-size: 2rem; font-weight: 700; color: var(--oro); }
+    .kitchen-timer { font-size: 1.1rem; font-weight: 700; color: var(--fuego); }
+    .kitchen-ready { font-size: 1rem; font-weight: 800; color: #4CAF50; }
+    .kitchen-timer.urgent { color: var(--rojo); animation: pulseTag 1s infinite; }
+    @keyframes pulseTag { 0%,100% { opacity:1; } 50% { opacity:.4; } }
+    .kitchen-items { font-size: 0.9rem; color: var(--text); margin-bottom: 8px; line-height: 1.6; }
+    .kitchen-items small { color: var(--text-dim); }
+    .kitchen-meta { font-size: 0.78rem; color: var(--text-muted); }
+    .kitchen-delivery { display: inline-block; padding: 3px 10px; border-radius: 999px; font-size: 0.7rem; font-weight: 600; }
+    .badge-pickup { background: rgba(76,175,80,0.1); color: #4CAF50; }
+    .badge-delivery { background: rgba(59,130,246,0.1); color: #60a5fa; }
+    /* Item lisible d'un coup d'oeil pour le cuistot */
+    .k-item { padding: 12px 0; border-bottom: 1px dashed var(--border); min-width: 0; }
+    .k-item:last-child { border-bottom: 0; }
+    .k-item-head { display: flex; align-items: baseline; gap: 10px; margin-bottom: 8px; flex-wrap: wrap; }
+    .k-qty { font-size: 1.4rem; font-weight: 800; color: var(--rojo); }
+    .k-item-name { font-size: 1.2rem; font-weight: 700; color: var(--text); min-width: 0; overflow-wrap: anywhere; }
+    .k-comp { display: grid; grid-template-columns: max-content minmax(0,1fr); gap: 6px 20px; padding-left: 10px; align-items: baseline; }
+    .k-k { color: var(--text-muted); font-size: 0.95rem; font-weight: 600; }
+    .k-v { color: var(--text); font-weight: 700; font-size: 1.08rem; min-width: 0; overflow-wrap: anywhere; }
+    .k-x { color: var(--fuego); font-weight: 800; }
+    .kitchen-meta { word-break: break-word; }
+    .kitchen-actions { display: flex; gap: 8px; margin-top: 14px; }
+    .k-btn { flex: 1; padding: 13px 10px; border-radius: 10px; font-weight: 800; font-size: 0.95rem; cursor: pointer; border: none; color: #fff; transition: transform .12s, filter .2s; }
+    .k-btn:active { transform: scale(0.96); }
+    .k-btn.k-prep { background: var(--fuego); }
+    .k-btn.k-ready { background: #3fae44; }
+    .k-btn.k-done { background: var(--rojo); }
+  </style>
+</head>
+<body style="background:var(--bg);">
+  <div class="kitchen-page">
+    <div class="kitchen-header">
+      <h1>👨‍🍳 Cuisine <span>CUT Streetfood</span></h1>
+      <button class="btn btn-outline btn-sm" onclick="location.reload()">🔄 Actualiser</button>
+    </div>
+    <div class="kitchen-grid" id="kitchen-grid">
+      <p style="color:var(--text-dim);grid-column:1/-1;text-align:center;">Chargement...</p>
+    </div>
+  </div>
+
+  <script>
+    // Reconstruit la structure (viande, crudites, sauces...) a partir du label texte
+    function parseLabel(label) {
+      const icons = { 'Gratiné':'🧀','Viande':'🍖','Viandes':'🍖','Crudités':'🥬','Sauces':'🥫','Boisson':'🥤','Accomp.':'🍟','Accompagnement':'🍟','Menu':'🍟','Plat':'🍽️' };
+      const comp = []; const supps = [];
+      (label || '').split(' • ').forEach(seg => {
+        seg = seg.trim(); if (!seg) return;
+        if (seg[0] === '+') { seg.slice(1).split(',').forEach(x => { x = x.trim(); if (x) supps.push(x); }); return; }
+        let k, v;
+        const ci = seg.indexOf(':');
+        if (ci >= 0) { k = seg.slice(0, ci).trim(); v = seg.slice(ci + 1).trim(); }
+        else if (seg.startsWith('Gratiné ')) { k = 'Gratiné'; v = seg.slice(8).trim(); }
+        else { k = 'Viandes'; v = seg.replace(/\+/g, ', '); }
+        comp.push({ i: icons[k] || '•', k, base: [v], extra: [] });
+      });
+      if (supps.length) comp.push({ i: '➕', k: 'Suppléments', base: [], extra: supps });
+      return { comp };
+    }
+
+    async function load() {
+      try {
+        const res = await fetch('/api/admin/orders');
+        const orders = await res.json();
+        const active = orders.filter(o => o.status === 'paid' || o.status === 'preparing' || o.status === 'ready');
+        const grid = document.getElementById('kitchen-grid');
+
+        if (!active.length) {
+          grid.innerHTML = '<p style="color:var(--text-dim);grid-column:1/-1;text-align:center;padding:60px;">✅ Aucune commande en attente. Tout est prêt !</p>';
+          return;
+        }
+
+        grid.innerHTML = active.map(o => {
+          const items = (o.items||[]).map(i => {
+            // Structure garantie pour TOUTES les commandes : comp si dispo,
+            // sinon reconstruit depuis le texte du label (anciennes commandes).
+            const comp = (i.comp && i.comp.length) ? i.comp : parseLabel(i.label).comp;
+            const cells = comp.map(cp => {
+              const base = (cp.base && cp.base.length) ? cp.base.join(', ') : (cp.v || '');
+              const ex = (cp.extra || []).map(e => '<span class="k-x"> + '+e+'</span>').join('');
+              const val = base + ex;
+              return '<span class="k-k">'+cp.i+' '+cp.k+'</span><span class="k-v">'+val+'</span>';
+            }).join('');
+            return '<div class="k-item">'+
+              '<div class="k-item-head"><span class="k-qty">'+(i.qty||1)+'×</span><span class="k-item-name">'+i.name+'</span></div>'+
+              (cells ? '<div class="k-comp">'+cells+'</div>' : '')+
+            '</div>';
+          }).join('');
+
+          const actions =
+            (o.status==='paid' ? '<button class="k-btn k-prep" onclick="setStatus('+o.orderNumber+',\'preparing\')">👨‍🍳 En préparation</button>' : '') +
+            (o.status==='preparing' ? '<button class="k-btn k-ready" onclick="setStatus('+o.orderNumber+',\'ready\')">🎉 Commande prête</button>' : '') +
+            (o.status==='ready' ? '<button class="k-btn k-done" onclick="setStatus('+o.orderNumber+',\'picked_up\')">🏃 Récupérée</button>' : '');
+          return '<div class="kitchen-card '+o.status+'">'+
+            '<div class="kitchen-card-header">'+
+            '<span class="kitchen-num">#'+o.orderNumber+'</span>'+
+            (o.status==='ready'?'<span class="kitchen-ready">✅ PRÊTE</span>':'')+
+            '</div>'+
+            '<div class="kitchen-items">'+items+'</div>'+
+            '<div class="kitchen-meta">'+
+            '👤 '+(o.name||'Client')+' · 📞 '+o.phone+' · '+
+            '<span class="kitchen-delivery '+(o.deliveryType==='delivery'?'badge-delivery':'badge-pickup')+'">'+(o.deliveryType==='delivery'?'🛵 Livraison':'🏃 Emporter')+'</span>'+
+            (o.deliveryAddress ? ' · 📍 '+o.deliveryAddress : '') +
+            '</div>'+
+            '<div class="kitchen-actions">'+actions+'</div>'+
+            '</div>';
+        }).join('');
+      } catch(e) {
+        document.getElementById('kitchen-grid').innerHTML = '<p style="color:var(--rojo);grid-column:1/-1;text-align:center;">Erreur de connexion</p>';
+      }
+    }
+    async function setStatus(num, status){
+      try{
+        await fetch('/api/admin/order/'+num+'/status',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({status})});
+        load();
+      }catch(e){ alert('Erreur réseau'); }
+    }
+    load();
+    setInterval(load, 8000);
+  </script>
+</body>
+</html>
