@@ -1615,6 +1615,34 @@ body.scroll-locked {
 .extras-title { color: var(--text); }
 .extras-note { color: var(--text-muted); }
 
+/* ─── Viandes : compteurs (plusieurs fois la même viande) ──── */
+.meat-list { display: grid; gap: 8px; }
+.meat-row {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  padding: 10px 14px; border-radius: var(--r-md);
+  background: #121820; border: 1.5px solid var(--border);
+}
+.meat-name { font-weight: 600; color: var(--text); font-size: 0.94rem; }
+.meat-name .pill-price { margin-left: 8px; }
+.meat-stepper { display: flex; align-items: center; gap: 4px; flex-shrink: 0; }
+.meat-btn {
+  width: 34px; height: 34px; border-radius: 50%;
+  background: var(--bg-card-hover); border: 1.5px solid var(--border-light);
+  color: var(--text); font-size: 1.1rem; font-weight: 700; line-height: 1;
+  display: flex; align-items: center; justify-content: center;
+  transition: all 0.18s var(--ease-out);
+}
+.meat-btn:hover:not(:disabled) { background: var(--rojo); border-color: var(--rojo); color: #fff; }
+.meat-btn:disabled { opacity: 0.35; cursor: default; }
+.meat-qty {
+  min-width: 26px; text-align: center;
+  font-family: 'Outfit', sans-serif; font-weight: 800; font-size: 1.05rem;
+  color: var(--text-muted);
+}
+.meat-qty.has { color: var(--fuego); }
+.custom-hint.warn { color: var(--rojo-light); font-weight: 700; }
+.custom-add-btn:disabled { opacity: 0.45; cursor: default; }
+
 /* ─── Choix de l'adresse de retrait (Paris 10 / Paris 11) ─── */
 .resto-row { display: grid; gap: 10px; }
 .resto-btn {
