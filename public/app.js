@@ -55,14 +55,24 @@ const MENU = [
   // ── formule midi (lun–ven, le midi) ──
   { id:'barquette-midi', cat:'midi', name:'Barquette Midi', desc:'Onglet de bœuf 130 g 🇫🇷, fries persillées, salade, une sauce maison et une boisson offerte. Du lundi au vendredi, le midi uniquement.', price:14.00, emoji:'☀️', img:'barquette-midi.webp', tag:'Formule Midi', tagClass:'tag-top' },
 
+  // ── smart formules ──
+  { id:'formule-solo', cat:'formules', name:'Formule SOLO', desc:'Es-tu prêt pour ce combat ? 🥊 Une entrée + une barquette + une boisson + un dessert.', price:25.00, emoji:'🥊', img:'formule-solo.webp', tag:'-3,10 €', tagClass:'tag-new' },
+  { id:'formule-duo', cat:'formules', name:'Formule DUO', desc:'Trouve ton partenaire pour ce combat ⚔️ 2 entrées + 2 barquettes + 2 boissons + 2 desserts.', price:50.00, emoji:'⚔️', img:'formule-duo.webp', tag:'-6,20 €', tagClass:'tag-new' },
+  { id:'chicken-fire', cat:'formules', name:'Chicken Fire 🐔🔥', desc:'Uniquement pour les adorateurs de poulet 😍 Ta formule 100 % poulet : 2 entrées de poulet + 1 barquette poulet pané.', price:22.00, emoji:'🔥', img:'chicken-fire.webp', tag:'-6,00 €', tagClass:'tag-new' },
+
   // ── barquettes (la signature CUT) ──
   { id:'barquette-simple', cat:'barquettes', name:'Barquette Simple', desc:'Le grand classique de chez CUT®. Une viande slicée, assaisonnée et nappée d\'une sauce maison, servie avec un accompagnement, salade et une sauce au choix.', price:15.00, emoji:'🥩', img:'barquette-simple.webp', tag:'Signature', tagClass:'tag-top' },
   { id:'barquette-double', cat:'barquettes', name:'Barquette Double', desc:'Deux viandes délicatement slicées et nappées de sauce maison, avec un accompagnement, salade et 2 sauces au choix.', price:20.00, emoji:'🥩', img:'barquette-double.webp' },
   { id:'barquette-triple', cat:'barquettes', name:'Barquette Triple', desc:'Pour les vrais meat lovers : trois viandes slicées, un accompagnement, salade et 2 sauces au choix.', price:25.00, emoji:'🔥', img:'barquette-triple.webp' },
-  { id:'veggie-barquette', cat:'barquettes', name:'Veggie Barquette', desc:'Croquettes de chèvre-miel, gaufre de patate douce, taboulé maison et patates douces fondantes.', price:12.00, emoji:'🍃', img:'veggie-barquette.webp' },
+  { id:'veggie-barquette', cat:'barquettes', name:'Veggie Barquette', desc:'Taboulé maison, patates douces fondantes, gaufre de patate douce et croquettes de chèvre-miel. La vie sans viande, c\'est pas mal aussi 🍃', price:13.00, emoji:'🍃', img:'veggie-barquette.webp' },
 
   // ── burger ──
   { id:'burger-poulet', cat:'burger', name:'Le Burger Poulet', desc:'Buns du boulanger, poulet crunchy, cheddar mature, salade et sauce CUT® secret 🤫. Servi avec un accompagnement au choix.', price:15.00, emoji:'🍔', img:'burger-poulet.webp' },
+
+  // ── accompagnements (vendus seuls) ──
+  { id:'fries-persillees', cat:'accompagnements', name:'Fries Persillées', desc:'Nos fries maison, avec une persillade maison.', price:6.00, emoji:'🍟', img:'fries-persillees.webp', tag:'Populaire', tagClass:'tag-top' },
+  { id:'patates-douces', cat:'accompagnements', name:'Patates Douces', desc:'Patates douces fondantes, avec des poivrons rouges.', price:6.00, emoji:'🍠', img:'patates-douces.webp' },
+  { id:'hasselback', cat:'accompagnements', name:'Hasselback', desc:'Pommes de terre suédoises, subtil mélange parmesan, persillade et amandes.', price:6.00, emoji:'🥔', img:'hasselback.webp' },
 
   // ── munchies ──
   { id:'tenders', cat:'munchies', name:'Tenders', desc:'3 tenders maison, panure cornflakes-granola-muesli, avec la sauce de ton choix.', price:6.50, emoji:'🍗', img:'tenders.webp', tag:'Populaire', tagClass:'tag-top' },
@@ -89,13 +99,15 @@ const MENU = [
 
 const CAT_NAMES = {
   'midi':'☀️ Formule Midi',
+  'formules':'🧮 Smart Formules',
   'barquettes':'🥩 Les Barquettes',
   'burger':'🍔 Le Burger',
-  'munchies':'🧀 Munchies',
+  'munchies':'🧀 Starters',
+  'accompagnements':'🍟 Les Accompagnements',
   'desserts':'🍰 Desserts Maison',
   'boissons':'🥤 Boissons'
 };
-const CAT_ORDER = ['midi','barquettes','burger','munchies','desserts','boissons'];
+const CAT_ORDER = ['midi','formules','barquettes','burger','munchies','accompagnements','desserts','boissons'];
 
 // ═══ OVERRIDES d'options par produit (survivent à une régénération du MENU) ═══
 (function applyMenuOverrides(){
@@ -103,17 +115,19 @@ const CAT_ORDER = ['midi','barquettes','burger','munchies','desserts','boissons'
   // Suppléments + sauces en plus (1 € l'unité) — communs aux plats
   const extras={ sauces:true, sauceList:SAUCES_CUT, saucePrice:1.00, supps:SUPPS_CUT };
 
-  // 1) Les Barquettes : viande(s) au choix + cuisson + accompagnement + sauce(s)
-  const barquette=(nbViandes,nbSauces)=>({
+  // 1) Les Barquettes : viande(s) au choix + cuisson + accompagnement.
+  //    ⚠️ UNE SEULE sauce offerte, quelle que soit la barquette — la 2e est un extra
+  //    payant (règle confirmée par le commerçant, cf. leur carte Deliveroo).
+  const barquette=(nbViandes)=>({
     viandeChoice:VIANDES_CUT, viandeMax:nbViandes,
     cuisson:CUISSONS,
     accompagnement:ACCOMPS,
-    sauces:{ list:SAUCES_CUT, count:nbSauces },
+    sauces:{ list:SAUCES_CUT, count:1 },
     extrasConfig:extras
   });
-  byId['barquette-simple'].custom = barquette(1,1);
-  byId['barquette-double'].custom = barquette(2,2);
-  byId['barquette-triple'].custom = barquette(3,2);
+  byId['barquette-simple'].custom = barquette(1);
+  byId['barquette-double'].custom = barquette(2);
+  byId['barquette-triple'].custom = barquette(3);
 
   // 2) Veggie Barquette : pas de viande, juste sauce + suppléments
   byId['veggie-barquette'].custom = { sauces:{ list:SAUCES_CUT, count:1 }, extrasConfig:extras };
@@ -127,10 +141,52 @@ const CAT_ORDER = ['midi','barquettes','burger','munchies','desserts','boissons'
   // 5) Tenders : sauce dédiée
   byId['tenders'].custom = { sauces:{ list:SAUCES_TENDERS, count:1 } };
 
-  // 6) Les autres munchies : sauce maison en plus (payante)
+  // 6) Les autres starters : sauce maison en plus (payante)
   ['croquettes-de-chevre-miel','duckcheese','brochettes-de-poulet-satay','popcorn-chicken'].forEach(id=>{
     byId[id].custom = { extrasConfig:{ sauces:true, sauceList:SAUCES_CUT, saucePrice:1.00 } };
   });
+
+  // 7) Les accompagnements vendus seuls : sauce en plus (payante)
+  ['fries-persillees','patates-douces','hasselback'].forEach(id=>{
+    byId[id].custom = { extrasConfig:{ sauces:true, sauceList:SAUCES_CUT, saucePrice:1.00 } };
+  });
+
+  // 8) Les Smart Formules : on fait composer chaque élément de la formule.
+  const ENTREES=['Tenders','Croquettes de Chèvre-Miel','DuckCheese','Brochettes de Poulet Satay','Popcorn Chicken'];
+  const ENTREES_POULET=['Tenders','Brochettes de Poulet Satay','Popcorn Chicken'];
+  const DESSERTS=['Cookies Maison','Granola CUT','Tiramisù Oréo','Tiramisù Spéculoos'];
+  const g=(key,label,short,icon,list)=>({key,label,short,icon,list});
+
+  byId['formule-solo'].custom = { choices:[
+    g('entree',  '🍗 Entrée au choix',        'Entrée',       '🍗', ENTREES),
+    g('viande',  '🥩 Viande de la barquette', 'Viande',       '🥩', VIANDES_CUT),
+    g('accomp',  '🍟 Accompagnement',         'Accomp.',      '🍟', ACCOMPS),
+    g('sauce',   '🥫 Sauce au choix',         'Sauce',        '🥫', SAUCES_CUT),
+    g('boisson', '🥤 Boisson',                'Boisson',      '🥤', DRINKS),
+    g('dessert', '🍰 Dessert',                'Dessert',      '🍰', DESSERTS)
+  ], cuisson:CUISSONS, extrasConfig:extras };
+
+  byId['formule-duo'].custom = { choices:[
+    g('entree',   '🍗 Entrée n°1',             'Entrée 1',    '🍗', ENTREES),
+    g('entree2',  '🍗 Entrée n°2',             'Entrée 2',    '🍗', ENTREES),
+    g('viande',   '🥩 Viande — barquette n°1', 'Viande 1',    '🥩', VIANDES_CUT),
+    g('accomp',   '🍟 Accompagnement n°1',     'Accomp. 1',   '🍟', ACCOMPS),
+    g('sauce',    '🥫 Sauce n°1',              'Sauce 1',     '🥫', SAUCES_CUT),
+    g('viande2',  '🥩 Viande — barquette n°2', 'Viande 2',    '🥩', VIANDES_CUT),
+    g('accomp2',  '🍟 Accompagnement n°2',     'Accomp. 2',   '🍟', ACCOMPS),
+    g('sauce2',   '🥫 Sauce n°2',              'Sauce 2',     '🥫', SAUCES_CUT),
+    g('boisson',  '🥤 Boisson n°1',            'Boisson 1',   '🥤', DRINKS),
+    g('boisson2', '🥤 Boisson n°2',            'Boisson 2',   '🥤', DRINKS),
+    g('dessert',  '🍰 Dessert n°1',            'Dessert 1',   '🍰', DESSERTS),
+    g('dessert2', '🍰 Dessert n°2',            'Dessert 2',   '🍰', DESSERTS)
+  ], cuisson:CUISSONS, extrasConfig:extras };
+
+  byId['chicken-fire'].custom = { choices:[
+    g('entree',  '🍗 Entrée poulet n°1', 'Entrée 1', '🍗', ENTREES_POULET),
+    g('entree2', '🍗 Entrée poulet n°2', 'Entrée 2', '🍗', ENTREES_POULET),
+    g('accomp',  '🍟 Accompagnement',    'Accomp.',  '🍟', ACCOMPS),
+    g('sauce',   '🥫 Sauce au choix',    'Sauce',    '🥫', SAUCES_CUT)
+  ], extrasConfig:extras };
 })();
 
 // ═══ STATE ═══════════════════════════════════════════════════
@@ -533,6 +589,8 @@ function openModal(itemId, existingCartItem) {
     if(c.nappage)editState.nappage=c.nappage[0];
     if(c.saveurChoice)editState.saveurChoice=c.saveurChoice[0];
     if(c.cuisson)editState.cuisson=c.cuisson[1]||c.cuisson[0];
+    // Groupes de choix génériques (formules : entrée, barquette, boisson, dessert…)
+    if(c.choices)c.choices.forEach(g=>{const f=g.list[0];editState[g.key]=(typeof f==='object'?f.name:f);});
     if(c.pain)editState.pain=c.pain[0];
     if(c.condiments)editState.condiments=[...(c.condiments.default||c.condiments.list)];
     if(c.plat)editState.plat=c.plat[0];
@@ -603,7 +661,8 @@ function openModal(itemId, existingCartItem) {
       else p.classList.toggle('active',(editState.condiments||[]).includes(p.dataset.val));
     });
     // Burger / Naan / Portion / Nappage / Saveur au choix (single-select)
-    ['burgerChoice','burger2Choice','naanChoice','portion','nappage','saveurChoice','cuisson'].forEach(k=>{
+    ['burgerChoice','burger2Choice','naanChoice','portion','nappage','saveurChoice','cuisson']
+      .concat((c.choices||[]).map(g=>g.key)).forEach(k=>{
       $('custom-body').querySelectorAll('.sauce-pill[data-key="'+k+'"]').forEach(p=>{
         p.classList.toggle('active',editState[k]===p.dataset.val);
       });
@@ -617,6 +676,15 @@ function openModal(itemId, existingCartItem) {
 
 function buildModalHTML(c) {
   let h='';
+  // Groupes de choix génériques (formules) — rendus en premier, dans l'ordre déclaré
+  if(c.choices)c.choices.forEach(g=>{
+    h+='<div class="custom-group"><label class="custom-label">'+g.label+'</label><div class="sauce-grid">'+
+      g.list.map(o=>{
+        const nm=(typeof o==='object'?o.name:o), pr=(typeof o==='object'?o.price:0);
+        return '<button class="sauce-pill" data-key="'+g.key+'" data-val="'+nm+'">'+nm+
+          (pr>0?'<span class="pill-price">+'+pr.toFixed(2).replace('.',',')+'€</span>':'')+'</button>';
+      }).join('')+'</div></div>';
+  });
   // Burger au choix (formules)
   if(c.burgerChoice){h+='<div class="custom-group"><label class="custom-label">🍔 Burger au choix</label><div class="sauce-grid">'+c.burgerChoice.map(v=>'<button class="sauce-pill" data-key="burgerChoice" data-val="'+v+'">'+v+'</button>').join('')+'</div></div>';}
   // 2ème burger au choix (Duo)
@@ -668,7 +736,7 @@ function buildModalHTML(c) {
     h+='<div class="custom-group extras-group">'+e+'</div>';
   }
   // No options
-  const hasOpts=c.viandes||c.sauces||c.gratinage||c.accompagnement||c.crudites||c.plat||c.boissonMenu||c.menu||c.extrasConfig||c.pain||c.condiments||c.burgerChoice||c.burger2Choice||c.naanChoice||c.viandeChoice||c.portion||c.nappage||c.saveurChoice||c.cuisson;
+  const hasOpts=c.viandes||c.sauces||c.gratinage||c.accompagnement||c.crudites||c.plat||c.boissonMenu||c.menu||c.extrasConfig||c.pain||c.condiments||c.burgerChoice||c.burger2Choice||c.naanChoice||c.viandeChoice||c.portion||c.nappage||c.saveurChoice||c.cuisson||c.choices;
   if(!hasOpts){h+='<div class="custom-group" style="text-align:center;border-bottom:0"><p style="color:var(--text-dim);font-size:0.9rem;">'+(editing.desc||'')+'</p></div>';}
   $('custom-body').innerHTML=h;
 
@@ -777,6 +845,7 @@ function updatePrice(){
   if(c.menu&&editState.menu)p+=c.menu;
   if(c.viandeChoice&&editState.viandeChoice){editState.viandeChoice.forEach(nm=>{const v=c.viandeChoice.find(x=>x.name===nm);if(v&&v.price)p+=v.price;});}
   if(c.portion&&editState.portion){const v=c.portion.find(x=>x.name===editState.portion);if(v&&v.price)p+=v.price;}
+  if(c.choices)c.choices.forEach(g=>{const o=g.list.find(x=>typeof x==='object'&&x.name===editState[g.key]);if(o&&o.price)p+=o.price;});
   const xc=c.extrasConfig;
   const extrasTotal=xc?(editState.extras||[]).reduce((sum,name)=>sum+getExtraPrice(xc,name),0):0;
   p+=extrasTotal;
@@ -792,6 +861,7 @@ function confirmProduct(){
   if(c.menu&&editState.menu)p+=c.menu;
   if(c.viandeChoice&&editState.viandeChoice){editState.viandeChoice.forEach(nm=>{const v=c.viandeChoice.find(x=>x.name===nm);if(v&&v.price)p+=v.price;});}
   if(c.portion&&editState.portion){const v=c.portion.find(x=>x.name===editState.portion);if(v&&v.price)p+=v.price;}
+  if(c.choices)c.choices.forEach(g=>{const o=g.list.find(x=>typeof x==='object'&&x.name===editState[g.key]);if(o&&o.price)p+=o.price;});
   const xc=c.extrasConfig;
   const extrasTotal=xc?(editState.extras||[]).reduce((sum,name)=>sum+getExtraPrice(xc,name),0):0;
   p+=extrasTotal;
@@ -809,6 +879,7 @@ function confirmProduct(){
   if(c.nappage&&editState.nappage)l+=(l?' • ':'')+'Nappage: '+editState.nappage;
   if(c.saveurChoice&&editState.saveurChoice)l+=(l?' • ':'')+'Saveur: '+editState.saveurChoice;
   if(c.cuisson&&editState.cuisson)l+=(l?' • ':'')+'Cuisson: '+editState.cuisson;
+  if(c.choices)c.choices.forEach(g=>{if(editState[g.key])l+=(l?' • ':'')+g.short+': '+editState[g.key];});
   if(c.pain&&editState.pain)l+=(l?' • ':'')+'Pain: '+editState.pain;
   if(c.condiments)l+=(l?' • ':'')+'Condiments: '+((editState.condiments&&editState.condiments.length)?editState.condiments.join('+'):'Sans');
   if(editState.sauces?.length)l+=(l?' • ':'')+'Sauces: '+editState.sauces.join('+');
@@ -840,6 +911,7 @@ function confirmProduct(){
   if(c.nappage&&editState.nappage)comp.push({i:'🍫',k:'Nappage',base:[editState.nappage],extra:[]});
   if(c.saveurChoice&&editState.saveurChoice)comp.push({i:'🥤',k:'Saveur',base:[editState.saveurChoice],extra:[]});
   if(c.cuisson&&editState.cuisson)comp.push({i:'🔥',k:'Cuisson',base:[editState.cuisson],extra:[]});
+  if(c.choices)c.choices.forEach(g=>{if(editState[g.key])comp.push({i:g.icon||'•',k:g.short,base:[editState[g.key]],extra:[]});});
   if(c.pain&&editState.pain)comp.push({i:'🫓',k:'Pain',base:[editState.pain],extra:[]});
   if(c.condiments)comp.push({i:'🥗',k:'Condiments',base:((editState.condiments&&editState.condiments.length)?editState.condiments:['Sans condiment']),extra:[]});
   if((editState.sauces&&editState.sauces.length)||exSauces.length)comp.push({i:'🥫',k:'Sauces',base:editState.sauces||[],extra:exSauces});
