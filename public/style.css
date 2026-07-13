@@ -1587,6 +1587,16 @@ body.scroll-locked {
 }
 .cart-overlay, .custom-overlay, .checkout-overlay { background: rgba(8,12,17,0.72); }
 .cart-badge { background: var(--rojo); color: #fff; box-shadow: 0 8px 30px rgba(192,120,77,0.45); }
+/* Le compteur héritait d'un fond bleu nuit + chiffre noir → invisible sur le thème sombre */
+.cart-count {
+  background: #FFFFFF;
+  color: var(--oro);
+  border: 2px solid var(--oro-dark);
+  width: 24px; height: 24px;
+  font-family: 'Outfit', sans-serif; font-weight: 900; font-size: 0.75rem;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.45);
+}
+@media (max-width: 768px) { .cart-count { width: 22px; height: 22px; font-size: 0.7rem; } }
 .cart-total strong { color: var(--fuego); }
 .cart-item-extras, .cart-item-edit { color: var(--rojo-light); }
 .checkout-input {
