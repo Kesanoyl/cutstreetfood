@@ -20,9 +20,8 @@
        côté serveur en var d'env Render ONESIGNAL_REST_API_KEY. -->
   <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
   <script>
-    // ⚠️ Créer une app OneSignal DÉDIÉE à CUT et coller son App ID ici
-    // (ne JAMAIS réutiliser l'App ID d'un autre restaurant).
-    var CUT_ONESIGNAL_APP_ID = "";
+    // App OneSignal DÉDIÉE à CUT (ne JAMAIS réutiliser celle d'un autre restaurant).
+    var CUT_ONESIGNAL_APP_ID = "61c5c2a0-2d59-46a6-aaa0-c1cf30bedf82";
     window.OneSignalDeferred = window.OneSignalDeferred || [];
     if (CUT_ONESIGNAL_APP_ID) {
       OneSignalDeferred.push(async function(OneSignal) {
