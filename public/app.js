@@ -37,9 +37,8 @@ const ACCOMPS = ['Fries', 'Patates douces', 'Hasselback'];
 // Boissons
 const DRINKS = ['Citronnade Maison','Coca-Cola','Coca-Cola Zéro','Ice Tea','Oasis Tropical','San Pellegrino','Cristaline'];
 
-// Les plats des menus Midi / Étudiant
+// Les plats du Menu Midi
 const PLATS_MIDI = ['Onglet de bœuf','Poulet pané','Burger'];
-const PLATS_ETUDIANT = ['Poulet pané','Burger'];
 
 // Suppléments payants (bloc EXTRAS de leur carte)
 const SUPPS_CUT = [
@@ -61,7 +60,6 @@ const CRUDITES = [];
 const MENU = [
   // ── les menus (prix de leur carte boutique) ──
   { id:'menu-midi', cat:'midi', name:'Menu Midi', desc:'Onglet de bœuf, poulet pané ou burger — avec fries, une sauce et une boisson.', price:11.90, emoji:'☀️', img:'barquette-midi.webp', tag:'Menu Midi', tagClass:'tag-top' },
-  { id:'menu-etudiant', cat:'midi', name:'Menu Étudiant', desc:'Poulet pané ou burger — avec fries, une sauce et une boisson. Le meilleur rapport qualité-prix de la carte.', price:9.90, emoji:'🎓', img:'menu-etudiant.webp', tag:'Étudiant', tagClass:'tag-new' },
 
   // ── smart formules (Deliveroo — absentes de la carte boutique) ──
   { id:'formule-solo', cat:'formules', name:'Formule SOLO', desc:'Es-tu prêt pour ce combat ? 🥊 Une entrée + une barquette + une boisson + un dessert.', price:25.00, emoji:'🥊', img:'formule-solo.webp' },
@@ -142,14 +140,10 @@ const CAT_ORDER = ['midi','formules','barquettes','burger','munchies','accompagn
   // 3) Le Burger : side au choix + sauce + extras
   byId['burger-poulet'].custom = { accompagnement:ACCOMPS, sauces:{ list:SAUCES_CUT, count:1 }, extrasConfig:extras };
 
-  // 4) Les Menus (Midi / Étudiant) : plat au choix + fries + sauce + boisson
+  // 4) Le Menu Midi : plat au choix + fries + sauce + boisson
   byId['menu-midi'].custom = {
     choices:[ { key:'platMenu', label:'🍖 Ton plat', short:'Plat', icon:'🍖', list:PLATS_MIDI } ],
     cuisson:CUISSONS, sauces:{ list:SAUCES_CUT, count:1 }, boissonMenu:DRINKS, extrasConfig:extras
-  };
-  byId['menu-etudiant'].custom = {
-    choices:[ { key:'platMenu', label:'🍖 Ton plat', short:'Plat', icon:'🍖', list:PLATS_ETUDIANT } ],
-    sauces:{ list:SAUCES_CUT, count:1 }, boissonMenu:DRINKS, extrasConfig:extras
   };
 
   // 5) Tenders : sauce dédiée (Korean / Spicy / BBQ / Nature)
