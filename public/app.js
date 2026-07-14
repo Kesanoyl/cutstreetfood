@@ -104,7 +104,7 @@ const MENU = [
 ];
 
 const CAT_NAMES = {
-  'midi':'☀️ Les Menus',
+  'midi':'☀️ Le Menu Midi',
   'formules':'🧮 Smart Formules',
   'barquettes':'🥩 Compose ta Barquette',
   'burger':'🍔 Le Burger',
